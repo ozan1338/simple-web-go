@@ -1,6 +1,11 @@
 package controllers
 
 import (
+	"fmt"
+	"strconv"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/ozan1338/simple-web/database"
 	"github.com/ozan1338/simple-web/models"
@@ -39,6 +44,12 @@ func Register(c *fiber.Ctx) error {
 	})
 }
 
+type sendData struct{
+	Id        uint
+	FullName string
+	Email     string
+}
+
 func Login(c *fiber.Ctx) error {
 	var data map[string]string
 
@@ -67,8 +78,61 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		Issuer: strconv.Itoa(int(user.Id)),
+		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	token, err := claims.SignedString([]byte("string"))
+
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	cookie := fiber.Cookie{
+		Name: "jwt",
+		Value: token,
+		Expires: time.Now().Add(time.Hour * 24),
+		HTTPOnly: true,
+	}
+
+	c.Cookie(&cookie)
+
+	sendData := sendData{
+		Id: user.Id,
+		FullName: user.FirstName+" "+user.LastName,
+		Email: user.Email,
+	}
+
 	return c.Status(200).JSON(fiber.Map{
 		"status":"success",
-		"data": user,
+		"data": sendData,
+		"token":token,
 	})
+}
+
+type Claims struct{
+	jwt.StandardClaims
+}
+
+func User(c *fiber.Ctx) error {
+	cookie := c.Cookies("jwt")
+
+	token, err := jwt.ParseWithClaims(cookie, &Claims{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte("string"), nil
+	})
+
+	if err != nil || !token.Valid {
+		fmt.Println(err)
+		fmt.Println("oalah asu")
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"status":"Error",
+			"message":"unauthorized",
+		})
+	}
+
+	claims := token.Claims
+
+	return c.JSON(claims)
+
 }

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -123,16 +122,42 @@ func User(c *fiber.Ctx) error {
 	})
 
 	if err != nil || !token.Valid {
-		fmt.Println(err)
-		fmt.Println("oalah asu")
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"status":"Error",
 			"message":"unauthorized",
 		})
 	}
 
-	claims := token.Claims
+	claims := token.Claims.(*Claims)
 
-	return c.JSON(claims)
+	var user models.User
 
+	database.DB.Where("id = ?", claims.Issuer).First(&user)
+
+	result := sendData{
+		Id: user.Id,
+		Email: user.Email,
+		FullName: user.FirstName+" "+user.LastName,
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":"success",
+		"data":result,
+	})
+
+}
+
+func Logout(c *fiber.Ctx) error {
+	cookie := fiber.Cookie{
+		Name: "jwt",
+		Value: "",
+		Expires: time.Now().Add(-time.Hour),
+		HTTPOnly: true,
+	}
+
+	c.Cookie(&cookie)
+
+	return c.Status(204).JSON(fiber.Map{
+		"status":"success",
+	})
 }

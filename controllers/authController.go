@@ -9,7 +9,6 @@ import (
 	"github.com/ozan1338/simple-web/database"
 	"github.com/ozan1338/simple-web/models"
 	"github.com/ozan1338/simple-web/util"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func Register(c *fiber.Ctx) error {
@@ -23,18 +22,17 @@ func Register(c *fiber.Ctx) error {
 		c.Status(400)
 		return c.JSON(fiber.Map{
 			"status": "Error",
-			"message": "Do Not Match",
+			"message": "Password Not Match",
 		})
 	}
-
-	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
 
 	user := models.User{
 		FirstName: data["first_name"],
 		LastName: data["last_name"],
 		Email: data["email"],
-		Password: string(password),
 	}
+
+	user.SetPassword(data["password"])
 
 	database.DB.Create(&user)
 
@@ -65,7 +63,7 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(data["password"])); err != nil {
+	if err := user.ComparePassword(data["password"]); err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"status":"error",
 			"message":"Incorect Password",

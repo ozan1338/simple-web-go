@@ -37,7 +37,7 @@ func CreateUser(c *fiber.Ctx) error {
 	})
 }
 
-func GetUser (c *fiber.Ctx) error {
+func GetUser(c *fiber.Ctx) error {
 	userId,_ := strconv.Atoi(c.Params("userId"))
 
 	user := models.User{

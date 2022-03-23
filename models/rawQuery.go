@@ -1,5 +1,7 @@
 package models
 
+import "strconv"
+
 func QueryUpdateUser(user User) string {
 	sqlQuery := "update users set "
 	if user.FirstName != "" {
@@ -17,6 +19,18 @@ func QueryUpdateUser(user User) string {
 	where := "where id = ? returning *"
 
 	sqlQuery += where
+
+	return sqlQuery
+}
+
+func QueryUpdateRole(role Role) string {
+	sqlQuery := "update roles set Name = '" + role.Name + "' where Id = ? returning *"
+
+	return sqlQuery
+}
+
+func QueryUpdateRoleIsActive(isActive bool) string {
+	sqlQuery := "update roles set IsActive = '" + strconv.FormatBool(isActive) + "' where Id = ?"
 
 	return sqlQuery
 }

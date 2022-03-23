@@ -29,6 +29,8 @@ func CreateRole(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
+	role.IsActive = true
+
 	database.DB.Create(&role)
 
 	return c.Status(201).JSON(fiber.Map{

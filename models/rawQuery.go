@@ -16,6 +16,10 @@ func QueryUpdateUser(user User) string {
 		sqlQuery += "email = '" + user.Email + "' "
 	}
 
+	if user.RoleId != 0 {
+		sqlQuery += "role_id = '"+ strconv.Itoa(int(user.RoleId)) + "' "
+	}
+
 	where := "where id = ? returning *"
 
 	sqlQuery += where
@@ -30,7 +34,7 @@ func QueryUpdateRole(role Role) string {
 }
 
 func QueryUpdateRoleIsActive(isActive bool) string {
-	sqlQuery := "update roles set IsActive = '" + strconv.FormatBool(isActive) + "' where Id = ?"
+	sqlQuery := "update roles set Is_Active = '" + strconv.FormatBool(isActive) + "' where Id = ?"
 
 	return sqlQuery
 }

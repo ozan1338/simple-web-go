@@ -11,7 +11,7 @@ import (
 func AllUsers(c *fiber.Ctx) error {
 	var users []models.User
 
-	database.DB.Find(&users)
+	database.DB.Preload("Role").Find(&users)
 
 	return c.JSON(fiber.Map{
 		"status":"success",

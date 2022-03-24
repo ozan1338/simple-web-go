@@ -1,6 +1,9 @@
 package models
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 func QueryUpdateUser(user User) string {
 	sqlQuery := "update users set "
@@ -36,5 +39,16 @@ func QueryUpdateRole(role Role) string {
 func QueryUpdateRoleIsActive(isActive bool) string {
 	sqlQuery := "update roles set Is_Active = '" + strconv.FormatBool(isActive) + "' where Id = ?"
 
+	return sqlQuery
+}
+
+func QueryDeleteDeletePermission() string {
+	sql := "delete from role_permisions where role_id = ?"
+	return sql
+}
+
+func QueryUpdateRolePermission(id_permission Permission, id_role uint) (string) {
+	//sqlQuery := fmt.Sprintf("delete from role_permisions where role_id = %v ",id_role)
+	sqlQuery := fmt.Sprintf("insert into role_permisions (role_id,permission_id) values(%v,%v)",id_role,id_permission.Id)
 	return sqlQuery
 }

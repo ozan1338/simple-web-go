@@ -21,12 +21,31 @@ func AllRoles(c *fiber.Ctx) error {
 	})
 }
 
-func CreateRole(c *fiber.Ctx) error {
-	var role models.Role
 
-	if err := c.BodyParser(&role); err != nil {
+
+func CreateRole(c *fiber.Ctx) error {
+	var roleDetail fiber.Map
+
+	if err := c.BodyParser(&roleDetail); err != nil {
 		fmt.Println(err)
 		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	list := roleDetail["permission"].([]interface{})
+
+	permission := make([]models.Permission, len(list))
+
+	for i, permissionId := range list {
+		id , _ := strconv.Atoi(permissionId.(string))
+
+		permission[i] = models.Permission{
+			Id: uint(id),
+		}
+	}
+
+	role := models.Role{
+		Name: roleDetail["name"].(string),
+		Permission: permission,
 	}
 
 	role.IsActive = true
@@ -46,7 +65,7 @@ func GetRole(c *fiber.Ctx) error {
 		Id: uint(roleId),
 	}
 
-	database.DB.Find(&role)
+	database.DB.Preload("Permission").Find(&role)
 
 	if role.Name == ""  {
 		return c.Status(404).JSON(fiber.Map{
@@ -64,12 +83,40 @@ func GetRole(c *fiber.Ctx) error {
 func UpdateRole(c *fiber.Ctx) error {
 	roleId,_ := strconv.Atoi(c.Params("roleId"))
 
-	role := models.Role{
-		Id: uint(roleId),
+	var roleDetail fiber.Map
+
+	if err := c.BodyParser(&roleDetail); err != nil {
+		fmt.Println(err)
+		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	if err := c.BodyParser(&role); err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+	list := roleDetail["permission"].([]interface{})
+
+	permission := make([]models.Permission, len(list))
+
+	for i, permissionId := range list {
+		id , _ := strconv.Atoi(permissionId.(string))
+
+		permission[i] = models.Permission{
+			Id: uint(id),
+		}
+	}
+
+	role := models.Role{
+		Id: uint(roleId),
+		Name: roleDetail["name"].(string),
+		Permission: permission,
+	}
+	
+	if len(role.Permission) > 0 {
+		var result interface{}
+		sqlQueryDeletePermission := models.QueryDeleteDeletePermission()
+		database.DB.Raw(sqlQueryDeletePermission, role.Id).Scan(result)
+		for i:=0 ; i < len(role.Permission); i++ {
+			sqlQueryForUpdatePermission := models.QueryUpdateRolePermission(role.Permission[i], role.Id)
+			database.DB.Raw(sqlQueryForUpdatePermission).Scan(result)
+			fmt.Println(sqlQueryForUpdatePermission)
+		}
 	}
 
 	sqlQuery := models.QueryUpdateRole(role)

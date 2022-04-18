@@ -32,6 +32,13 @@ func Setup(app *fiber.App) {
     app.Patch("/api/role/:roleId", controllers.UpdateRole)
     app.Delete("/api/role/:roleId", controllers.DeleteRole)
 
-    //CRUD PERMISSIOn
+    //CRUD PERMISSION
     app.Get("/api/permission", controllers.AllPermission)
+
+    //CRUD PRODUCT
+    app.Get("/api/product", controllers.AllProducts)
+    app.Post("/api/product", controllers.CreateProduct)
+    app.Get("/api/product/:productId", controllers.GetProduct)
+    app.Patch("/api/product/:productId", controllers.UpdateProduct)
+    app.Delete("/api/product/:productId", controllers.DeleteProduct)
 }

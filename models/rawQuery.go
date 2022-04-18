@@ -52,3 +52,24 @@ func QueryUpdateRolePermission(id_permission Permission, id_role uint) (string) 
 	sqlQuery := fmt.Sprintf("insert into role_permisions (role_id,permission_id) values(%v,%v)",id_role,id_permission.Id)
 	return sqlQuery
 }
+
+func QueryUpdateProduct(product Product) string {
+	sqlQuery := "update products set "
+	if product.Title != "" {
+		sqlQuery += "title = '"+ product.Title +"' "
+	}
+	if product.Description != "" {
+		sqlQuery += "description = '"+product.Description+"' "
+	}
+	if product.Image != "" {
+		sqlQuery += "image = '"+product.Image+"' "
+	}
+	if product.Price != 0 {
+		sqlQuery += fmt.Sprintf("price = '%v' ", product.Price)
+	}
+
+	where := "where id = ? returning *"
+
+	sqlQuery += where
+	return sqlQuery
+}

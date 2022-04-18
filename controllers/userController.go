@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,9 +10,12 @@ import (
 )
 
 func AllUsers(c *fiber.Ctx) error {
+	limit := 5
+	page,_ := strconv.Atoi( c.Query("page","1"))
+	offset := (page-1) * limit
 	var users []models.User
 
-	database.DB.Preload("Role").Find(&users)
+	database.DB.Preload("Role").Limit(limit).Offset(offset).Find(&users)
 
 	return c.JSON(fiber.Map{
 		"status":"success",
@@ -24,6 +28,7 @@ func CreateUser(c *fiber.Ctx) error {
 	var user models.User
 
 	if err := c.BodyParser(&user); err != nil {
+		fmt.Println(err)
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 

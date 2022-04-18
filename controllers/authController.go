@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -35,7 +36,7 @@ func Register(c *fiber.Ctx) error {
 
 	user.SetPassword(data["password"])
 
-	database.DB.Create(&user)
+	go database.DB.Create(&user)
 
 	return c.Status(201).JSON(fiber.Map{
 		"status":"Success",
@@ -55,7 +56,11 @@ func Login(c *fiber.Ctx) error {
 
 	var user models.User
 
-	database.DB.Where("email = ?", data["email"]).First(&user)
+	// database.DB.Where("email = ?", data["email"]).First(&user)
+	sqlQuery := "select * from users where email = ?"
+	database.DB.Raw(sqlQuery, data["email"]).Scan(&user)
+
+	//fmt.Println(user)
 
 	if user.Id == 0 {
 		return c.Status(404).JSON(fiber.Map{
@@ -125,5 +130,69 @@ func Logout(c *fiber.Ctx) error {
 
 	return c.Status(204).JSON(fiber.Map{
 		"status":"success",
+	})
+}
+
+func UpdateInfo(c *fiber.Ctx) error {
+	var data map[string]string
+
+	if err:= c.BodyParser(&data); err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	fmt.Println(data)
+	cookie := c.Cookies("jwt")
+
+	id,_ := util.ParseJWT(cookie)
+
+	userId,_ := strconv.Atoi(id)
+
+	user := models.User{
+		Id: uint(userId),
+		FirstName: data["first_name"],
+		LastName: data["last_name"],
+		Email: data["email"],
+	}
+
+	//fmt.Println(user)
+
+	database.DB.Model(&user).Where("id: ?", id).Updates(user)
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":"success",
+		"data":user,
+	})
+}
+
+func UpdatePassword(c *fiber.Ctx) error {
+	var data map[string]string
+
+	if err:= c.BodyParser(&data); err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	//fmt.Println(data)
+
+	if data["password"] != data["password_confirm"] {
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"status": "Error",
+			"message": "Password Not Match",
+		})
+	}
+
+	cookie := c.Cookies("jwt")
+
+	id,_ := util.ParseJWT(cookie)
+
+	user := models.User{}
+
+	user.SetPassword(data["password"])
+
+	database.DB.Model(&user).Where("id: ?", id).Updates(user)
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":"success",
+		"data":user,
 	})
 }
